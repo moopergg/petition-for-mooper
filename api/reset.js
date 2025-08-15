@@ -1,16 +1,15 @@
 // /api/reset.js
-import { put } from '@vercel/blob'; // If you store supporters in Blob
+import { put } from '@vercel/blob';
 
 export async function GET() {
   try {
-    // Clear supporters
     await put('supporters', JSON.stringify([]), {
       access: 'public',
       contentType: 'application/json'
     });
     return new Response('Reset complete', { status: 200 });
   } catch (err) {
-    console.error(err);
+    console.error('GET /api/reset error:', err);
     return new Response('Server error', { status: 500 });
   }
 }
