@@ -1,51 +1,59 @@
-const el = {
-    form: document.querySelector('form'),
-    input: document.querySelector('input'),
-    list: document.querySelector('ul'),
-    count: document.querySelector('b')
-};
+// /api/supporters.js
+import { get, put } from '@vercel/blob';
 
-function render(supporters) {
-    el.list.innerHTML = '';
-    el.count.textContent = supporters.length;
-
-    for (const name of supporters) {
-        const li = document.createElement('li');
-        li.textContent = name;
-        el.list.appendChild(li);
-    }
+async function readSupporters() {
+  try {
+    const blob = await get('supporters');
+    if (!blob) return [];
+    const text = await blob.text();
+    const parsed = JSON.parse(text);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // If the blob doesn't exist or JSON is invalid, start fresh
+    return [];
+  }
 }
 
-async function loadSupporters() {
-    try {
-        const res = await fetch('/api/supporters');
-        if (!res.ok) throw new Error('Failed to load');
-        const data = await res.json();
-        render(Array.isArray(data.supporters) ? data.supporters : []);
-    } catch (err) {
-        console.error('Error loading supporters:', err);
+export async function GET() {
+  const supporters = await readSupporters();
+  return new Response(JSON.stringify({ supporters }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store'
     }
+  });
 }
 
-async function signPetition(event) {
-    event.preventDefault();
-    const name = el.input.value.trim();
-    if (!name) return;
+export async function POST(req) {
+  try {
+    const { username } = await req.json();
+    const name = typeof username === 'string' ? username.trim() : '';
 
-    try {
-        const res = await fetch('/api/supporters', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name })
-        });
-        if (!res.ok) throw new Error('Failed to sign');
-        el.input.value = '';
-        loadSupporters();
-    } catch (err) {
-        console.error('Error signing petition:', err);
+    if (!name || name.length > 50) {
+      return new Response(JSON.stringify({ error: 'Invalid username' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
-}
 
-el.form.onsubmit = signPetition;
-loadSupporters();
-setInterval(loadSupporters, 10000); // refresh every 10 seconds
+    const supporters = await readSupporters();
+    supporters.push(name);
+
+    await put('supporters', JSON.stringify(supporters), {
+      access: 'public',
+      contentType: 'application/json'
+    });
+
+    return new Response(JSON.stringify({ supporters }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (err) {
+    console.error('POST /api/supporters error:', err);
+    return new Response(JSON.stringify({ error: 'Server error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
