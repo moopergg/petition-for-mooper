@@ -1,127 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Petition</title>
-  <style>
+<meta charset="UTF-8">
+<title>Mooper_Man for Commanding Officer of AAB!</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: sans-serif;
-      max-width: 600px;
-      margin: 2rem auto;
-      padding: 1rem;
+        font-family: 'Segoe UI', Tahoma, sans-serif;
+        background: linear-gradient(270deg, #4f8cff, #6ad2ff, #6affc9);
+        background-size: 600% 600%;
+        animation: bgShift 12s ease infinite;
+        color: #333;
+        padding: 20px;
     }
-    form {
-      margin-bottom: 1rem;
+    @keyframes bgShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
     }
-    input {
-      padding: 0.5rem;
-      font-size: 1rem;
-      width: 70%;
+    .container {
+        max-width: 700px;
+        margin: auto;
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+        animation: fadeIn 0.8s ease-out;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    h1 {
+        text-align: center;
+        color: #2c3e50;
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+    p { text-align: center; margin-bottom: 1rem; font-size: 1.05rem; }
+    .sign-box { display: flex; gap: 8px; margin: 20px 0; }
+    input[type="text"] {
+        flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc;
+        font-size: 1rem; outline: none; transition: box-shadow 0.3s, border 0.3s;
+    }
+    input[type="text"]:focus {
+        box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.3); border-color: #4f8cff;
     }
     button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      margin-left: 0.5rem;
+        padding: 12px 20px; background: linear-gradient(135deg, #28a745, #20c997);
+        color: white; border: none; border-radius: 8px; font-size: 1rem;
+        cursor: pointer; transition: transform 0.2s, background 0.3s;
     }
+    button:hover { transform: translateY(-2px); background: linear-gradient(135deg, #218838, #198754); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    #signed-msg { text-align: center; color: #28a745; font-weight: bold; margin-top: 10px; }
+    h2 { margin-top: 30px; color: #2c3e50; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 5px; }
     ul {
-      list-style: none;
-      padding: 0;
+        list-style: none; padding: 0; max-height: 220px; overflow-y: auto; margin-top: 10px;
     }
     li {
-      padding: 0.25rem 0;
+        background: rgba(255,255,255,0.7); margin: 6px 0; padding: 10px; border-radius: 8px;
+        font-weight: 500; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     }
+    ul::-webkit-scrollbar { width: 6px; }
+    ul::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 4px; }
     #reset-btn {
-      background: #f44336;
-      color: white;
-      border: none;
-      margin-top: 1rem;
-      display: none;
+        background: #f44336; display: none; margin-top: 15px;
     }
-  </style>
+    @media (max-width: 500px) {
+        .sign-box { flex-direction: column; }
+        button { width: 100%; }
+    }
+</style>
 </head>
 <body>
-  <h1>Sign the Petition</h1>
-  <form>
-    <input placeholder="Your name" />
-    <button type="submit">Sign</button>
-  </form>
 
-  <p><b>0</b> supporters so far:</p>
-  <ul></ul>
+<div class="container">
+    <h1>📝 Mooper_Man for Commanding Officer of AAB!</h1>
+    <p><strong>Signatures:</strong> <span id="count">0</span></p>
 
-  <button id="reset-btn">🔄 Reset Petition</button>
+    <div class="sign-box">
+        <input type="text" id="username" placeholder="Enter your Roblox username">
+        <button onclick="signPetition()">Sign</button>
+    </div>
 
-  <script>
-    const el = {
-      form: document.querySelector('form'),
-      input: document.querySelector('input'),
-      list: document.querySelector('ul'),
-      count: document.querySelector('b'),
-      resetBtn: document.getElementById('reset-btn')
-    };
+    <div id="signed-msg"></div>
 
-    function render(supporters) {
-      el.list.innerHTML = '';
-      el.count.textContent = supporters.length;
-      for (const name of supporters) {
-        const li = document.createElement('li');
-        li.textContent = name;
-        el.list.appendChild(li);
-      }
+    <h2>Supporters:</h2>
+    <ul id="supporterList"></ul>
+
+    <!-- Admin reset button -->
+    <button id="reset-btn">🔄 Reset Petition</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+    const supporterList = document.getElementById('supporterList');
+    const countDisplay = document.getElementById('count');
+    const signedMsg = document.getElementById('signed-msg');
+    const inputField = document.getElementById('username');
+    const signButton = document.querySelector('.sign-box button');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let alreadySigned = localStorage.getItem('signed') === 'true';
+
+    function render(list) {
+        supporterList.innerHTML = '';
+        countDisplay.textContent = list.length;
+        list.forEach(name => {
+            const li = document.createElement('li');
+            li.textContent = String(name);
+            supporterList.appendChild(li);
+        });
     }
 
     async function loadSupporters() {
-      try {
-        const res = await fetch('/api/supporters');
-        if (!res.ok) throw new Error('Failed to load');
-        const data = await res.json();
-        render(Array.isArray(data.supporters) ? data.supporters : []);
-      } catch (err) {
-        console.error('Error loading supporters:', err);
-      }
+        try {
+            const res = await fetch('/api/supporters');
+            if (!res.ok) throw new Error('Failed to load');
+            const data = await res.json();
+            render(Array.isArray(data.supporters) ? data.supporters : []);
+        } catch {}
     }
 
-    async function signPetition(event) {
-      event.preventDefault();
-      const name = el.input.value.trim();
-      if (!name) return;
+    function setSignedUI() {
+        inputField.disabled = true;
+        signButton.disabled = true;
+        signedMsg.textContent = "✅ You've signed the petition. Thank you for your support!";
+    }
 
-      try {
-        const res = await fetch('/api/supporters', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name })
+    if (alreadySigned) setSignedUI();
+
+    async function signPetition() {
+        if (alreadySigned) return;
+        const username = inputField.value.trim();
+        if (!username) { alert("Please enter a Roblox username."); return; }
+        if (username.length > 50) { alert("Username too long (max 50)."); return; }
+
+        signButton.disabled = true;
+
+        try {
+            const res = await fetch('/api/supporters', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                alert(data && data.error ? data.error : 'Could not submit. Try again.');
+                signButton.disabled = false;
+                return;
+            }
+
+            render(Array.isArray(data.supporters) ? data.supporters : []);
+            inputField.value = '';
+            localStorage.setItem('signed', 'true');
+            alreadySigned = true;
+            setSignedUI();
+            launchConfetti();
+        } catch {
+            alert('Network error. Please try again.');
+            signButton.disabled = false;
+        }
+    }
+
+    // Confetti celebration
+    function launchConfetti() {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
         });
-        if (!res.ok) throw new Error('Failed to sign');
-        el.input.value = '';
-        loadSupporters();
-      } catch (err) {
-        console.error('Error signing petition:', err);
-      }
     }
 
-    el.form.onsubmit = signPetition;
-    loadSupporters();
-    setInterval(loadSupporters, 10000); // refresh every 10 seconds
-
-    el.resetBtn.onclick = async () => {
-      if (!confirm('Are you sure you want to reset all signatures?')) return;
-      try {
-        const res = await fetch('/api/reset');
-        if (!res.ok) throw new Error('Reset failed');
-        loadSupporters();
-        alert('Petition has been reset.');
-      } catch (err) {
-        console.error(err);
-        alert('Error resetting petition.');
-      }
+    // Admin reset
+    resetBtn.onclick = async () => {
+        if (!confirm('Are you sure you want to reset all signatures?')) return;
+        try {
+            const res = await fetch('/api/reset');
+            if (!res.ok) throw new Error('Reset failed');
+            loadSupporters();
+            alert('Petition has been reset.');
+            localStorage.removeItem('signed');
+            location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('Error resetting petition.');
+        }
     };
 
-    // Show reset button only if ?admin=true is in the URL
+    // Show admin reset button only with ?admin=true
     if (location.search.includes('admin=true')) {
-      el.resetBtn.style.display = 'inline-block';
+        resetBtn.style.display = 'inline-block';
     }
-  </script>
+
+    window.signPetition = signPetition;
+    loadSupporters();
+    setInterval(loadSupporters, 10000); // Auto-refresh every 10s
+</script>
+
 </body>
 </html>
