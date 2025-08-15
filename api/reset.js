@@ -9,7 +9,7 @@ export async function GET() {
     });
     return new Response('Reset complete', { status: 200 });
   } catch (err) {
-    console.error('GET /api/reset error:', err);
+    console.error('Reset error:', err);
     return new Response('Server error', { status: 500 });
   }
 }
